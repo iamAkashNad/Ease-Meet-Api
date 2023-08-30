@@ -36,8 +36,6 @@ const validName = () => {
     });
 };
 
-exports.signupValidation = () => [
-  validName(),
-  isEmail(),
-  validPassword(),
-];
+exports.signupValidation = () => [validName(), isEmail(), validPassword()];
+
+exports.loginValidation = () => [isEmail(), validPassword()];

@@ -3,6 +3,7 @@ const { validationResult, body } = require("express-validator");
 
 const User = require("../models/user.model");
 const OffHour = require("../models/offhour.model");
+const Appointment = require("../models/appointment.model");
 
 const forwardError = require("../utils/forwardError.util");
 const getCode = require("../utils/getCode.util");
@@ -104,7 +105,10 @@ exports.updatePassword = async (req, res, next) => {
 
 exports.getOffHours = async (req, res, next) => {
   try {
-    const offHours = await OffHour.find({ user: req.userId }).sort({
+    const offHours = await OffHour.find({
+      user: req.userId,
+      start: { $gt: Date.now() },
+    }).sort({
       start: 1,
     });
     res.json({
@@ -119,6 +123,7 @@ exports.getOffHours = async (req, res, next) => {
 
 exports.addOffHours = async (req, res, next) => {
   const { start, end, flag } = req.body;
+
   const startTime = new Date(start);
   const endTime = new Date(end);
   if (startTime == "Invalid Date" || endTime == "Invalid Date") {
@@ -148,7 +153,10 @@ exports.addOffHours = async (req, res, next) => {
   }
 
   try {
-    const offHours = await OffHour.find({ user: req.userId });
+    const offHours = await OffHour.find({
+      user: req.userId,
+      start: { $gt: Date.now() },
+    });
     const mergeIndex = offHours.findIndex(
       (offHour) =>
         (offHour.start <= startMilli && startMilli <= offHour.end) ||
@@ -160,6 +168,29 @@ exports.addOffHours = async (req, res, next) => {
         "Fail to add Off Hour to your list - Your atleast one of the off hour have some shared time with current one!",
         422
       );
+
+    const meetArr1 = await Appointment.find({
+      admin: req.userId,
+      start: { $gte: startMilli },
+      end: { $lte: endMilli },
+      status: "Accepted"
+    }).select("_id");
+
+    const meetArr2 = await Appointment.find({
+      guest: req.userId,
+      start: { $gte: startMilli },
+      end: { $lte: endMilli },
+      status: "Accepted"
+    }).select("_id");
+
+    if (meetArr1.length > 0 || meetArr2.lentgh > 0) {
+      forwardError(
+        `You have total ${
+          meetArr1.length + meetArr2.length
+        } appointments, At that time you can't add an off hour`,
+        422
+      );
+    }
 
     const offHour = new OffHour({
       start: startMilli,

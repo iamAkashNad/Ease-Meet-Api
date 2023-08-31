@@ -39,3 +39,5 @@ const validName = () => {
 exports.signupValidation = () => [validName(), isEmail(), validPassword()];
 
 exports.loginValidation = () => [isEmail(), validPassword()];
+
+exports.validations = { isEmail, validName, validPassword };

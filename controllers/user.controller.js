@@ -8,6 +8,10 @@ const Appointment = require("../models/appointment.model");
 const forwardError = require("../utils/forwardError.util");
 const getCode = require("../utils/getCode.util");
 const sendEmail = require("../utils/Emails/sendEmail.util");
+const {
+  getQueryForAppointment,
+  getQueryForOffHour,
+} = require("../utils/getQuery.util");
 
 exports.updateProfileName = async (req, res, next) => {
   const { errors } = validationResult(req);
@@ -153,41 +157,23 @@ exports.addOffHours = async (req, res, next) => {
   }
 
   try {
-    const offHours = await OffHour.find({
-      user: req.userId,
-      start: { $gt: Date.now() },
-    });
-    const mergeIndex = offHours.findIndex(
-      (offHour) =>
-        (offHour.start <= startMilli && startMilli <= offHour.end) ||
-        (offHour.start <= endMilli && endMilli <= offHour.end)
-    );
+    const offHours = await OffHour.find(
+      getQueryForOffHour(req.userId, startMilli, endMilli)
+    ).select("_id");
 
-    if (mergeIndex >= 0)
+    if (offHours.length > 0)
       forwardError(
         "Fail to add Off Hour to your list - Your atleast one of the off hour have some shared time with current one!",
         422
       );
 
-    const meetArr1 = await Appointment.find({
-      admin: req.userId,
-      start: { $gte: startMilli },
-      end: { $lte: endMilli },
-      status: "Accepted"
-    }).select("_id");
+    const appointments = await Appointment.find(
+      getQueryForAppointment(req.userId, startMilli, endMilli)
+    ).select("_id");
 
-    const meetArr2 = await Appointment.find({
-      guest: req.userId,
-      start: { $gte: startMilli },
-      end: { $lte: endMilli },
-      status: "Accepted"
-    }).select("_id");
-
-    if (meetArr1.length > 0 || meetArr2.lentgh > 0) {
+    if (appointments.length > 0) {
       forwardError(
-        `You have total ${
-          meetArr1.length + meetArr2.length
-        } appointments, At that time you can't add an off hour`,
+        `You have total ${appointments.length} appointments in that time period, So you can't add an off hour`,
         422
       );
     }

@@ -12,7 +12,7 @@ const getTamplate = (purpose, data) => {
     return `
       <section>
           <h4>Hello ${data.name},</h4>
-          <p>This is the OTP for forgot your password which will be expires in 5 minutes.</p>
+          <p>This is the OTP for forgot your password which will be expires in 10 minutes.</p>
           <p>[ ${data.code} ]</p>
           <p style="font-weight: bold;">Note: If you are not trying to forgot the password, please ignore this mail. And also not give this OTP to other because by this your account password can be reset.</p>
       </section>

@@ -49,7 +49,7 @@ exports.sendVerificationCodeForForgotPassword = async (req, res, next) => {
     const code = getCode();
     user.util = {
       fp_code: code,
-      expiresIn: Date.now() + 1000 * 60 * 1,
+      expiresIn: Date.now() + 1000 * 60 * 10,
     };
     await user.save();
     sendEmail("forgot-pass", { name: user.name, email, code }).catch(() => {});

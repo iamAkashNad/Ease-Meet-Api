@@ -16,7 +16,8 @@ const userSchema = new Schema({
   verified: {
     type: Boolean,
     default: false
-  }
+  },
+  util: Object
 });
 
 module.exports = model("User", userSchema);

@@ -26,12 +26,7 @@ const appointmentSchema = new Schema({
     type: Schema.ObjectId,
     ref: "User",
     required: true,
-  },
-  status: {
-    type: String,
-    default: "Requested",
-    enum: ["Requested", "Accepted", "Canceled", "Denied"],
-  },
+  }
 });
 
 module.exports = model("Appointment", appointmentSchema);

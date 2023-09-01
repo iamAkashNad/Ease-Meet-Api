@@ -48,7 +48,7 @@ exports.sendVerificationCode = async (req, res, next) => {
     };
 
     await existingUser.save();
-    await sendEmail("email-verify", { name: existingUser.name, email: existingUser.email, code });
+    sendEmail("email-verify", { name: existingUser.name, email: existingUser.email, code }).catch(() => {});
 
     res.json({ success: true, message: "Verification code send Successfully!" });
   } catch(error) {
@@ -57,10 +57,10 @@ exports.sendVerificationCode = async (req, res, next) => {
 };
 
 exports.verifyEmail = async (req, res, next) => {
-  const { code } = req.body;
+  const { code, email } = req.body;
 
   try {
-    const existingUser = await User.findOne({ "util.code": code });
+    const existingUser = await User.findOne({ "util.code": code, email });
     if(!existingUser) forwardError("Verification fails - Incorrect code Entered!", 422);
     
     if(existingUser.verified) forwardError("Your email was already verified!", 400);

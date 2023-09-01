@@ -5,7 +5,26 @@ const OffHour = require("../models/offhour.model");
 const Appointment = require("../models/appointment.model");
 
 const forwardError = require("../utils/forwardError.util");
-const { getQueryForOffHour, getQueryForAppointment } = require("../utils/getQuery.util");
+const {
+  getQueryForOffHour,
+  getQueryForAppointment,
+} = require("../utils/getQuery.util");
+
+exports.getAllUsers = async (req, res, next) => {
+  try {
+    const users = await User.find({
+      _id: { $ne: req.userId },
+      verified: true,
+    }).select("-password -util");
+    res.json({
+      success: true,
+      message: "All users fetched Successfully!",
+      users: users.map((user) => user._doc),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 exports.getUpcomingAppoinments = async (req, res, next) => {
   try {

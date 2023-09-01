@@ -13,6 +13,21 @@ const {
   getQueryForOffHour,
 } = require("../utils/getQuery.util");
 
+exports.getProfile = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.userId).select("-password -util");
+    if (!user) forwardError("User not Found!", 404);
+
+    res.json({
+      success: true,
+      message: "User fetched Successfully!",
+      user: user._doc,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.updateProfileName = async (req, res, next) => {
   const { errors } = validationResult(req);
 
@@ -111,7 +126,7 @@ exports.getOffHours = async (req, res, next) => {
   try {
     const offHours = await OffHour.find({
       user: req.userId,
-      start: { $gt: Date.now() },
+      end: { $gt: Date.now() },
     }).sort({
       start: 1,
     });
@@ -190,6 +205,23 @@ exports.addOffHours = async (req, res, next) => {
       message: "Adding off hour to the user Successful!",
       offHour: offHour._doc,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteOffHour = async (req, res, next) => {
+  const { offHourId } = req.params;
+
+  try {
+    const offHour = await OffHour.findById(offHourId);
+    if (!offHour) forwardError("No off hour found with that id", 404);
+
+    if (offHour.user.toString() !== req.userId)
+      forwardError("You are not authorized to delete this off hour.", 403);
+
+    await OffHour.deleteOne({ _id: offHourId });
+    res.json({ success: true, message: "Off hour deleted Successfully!" });
   } catch (error) {
     next(error);
   }

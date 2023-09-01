@@ -124,6 +124,13 @@ exports.scheduleAppointment = async (req, res, next) => {
     );
 
   try {
+    const admin = await User.findById(req.userId).select("verified");
+    if (!admin.verified) {
+      forwardError(
+        "You have to be verified for schedule appointments to someone - please verify your email first!",
+        400
+      );
+    }
     const offHoursForAdmin = await OffHour.find(
       getQueryForOffHour(req.userId, startMilli, endMilli)
     ).select("_id");

@@ -6,6 +6,9 @@
   "scripts": {
     "start:dev": "nodemon index.js"
   },
+  "engines": {
+    "node": "17.8.0"
+  },
   "author": "Akash Nad",
   "license": "ISC",
   "dependencies": {

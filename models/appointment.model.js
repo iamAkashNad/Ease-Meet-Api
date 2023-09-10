@@ -26,6 +26,10 @@ const appointmentSchema = new Schema({
     type: Schema.ObjectId,
     ref: "User",
     required: true,
+  },
+  cancel: {
+    type: Boolean,
+    default: false
   }
 });
 

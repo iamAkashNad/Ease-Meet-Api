@@ -9,6 +9,9 @@ const {
   getQueryForOffHour,
   getQueryForAppointment,
 } = require("../utils/getQuery.util");
+const sendEmail = require("../utils/Emails/sendEmail.util");
+
+const { convertDate, convertTime } = require("../utils/convertDateTime.util");
 
 exports.getAllUsers = async (req, res, next) => {
   try {
@@ -32,11 +35,11 @@ exports.getUpcomingAppoinments = async (req, res, next) => {
       $or: [
         {
           admin: req.userId,
-          start: { $gte: Date.now() },
+          end: { $gte: Date.now() },
         },
         {
           guest: req.userId,
-          start: { $gte: Date.now() },
+          end: { $gte: Date.now() },
         },
       ],
     })
@@ -85,6 +88,14 @@ exports.scheduleAppointment = async (req, res, next) => {
     );
   }
 
+  if (startTime <= Date.now()) {
+    return forwardError(
+      "You can't schedule an appointment in past or right now - please choose a date in future!",
+      400,
+      next
+    );
+  }
+
   if (isNaN(duration))
     return forwardError(
       "Please enter a valid duration for the appointment.",
@@ -111,7 +122,7 @@ exports.scheduleAppointment = async (req, res, next) => {
   const endHour = new Date(endMilli).getHours();
   if (startHour >= 21 || startHour <= 6 || endHour >= 21 || endHour <= 6)
     return forwardError(
-      "You can't schedule appointment with anyone in between 9:00 PM to 7:00 AM.",
+      "You can't schedule appointment with anyone in between 9:00 PM to 6:59 AM.",
       400,
       next
     );
@@ -124,7 +135,7 @@ exports.scheduleAppointment = async (req, res, next) => {
     );
 
   try {
-    const admin = await User.findById(req.userId).select("verified");
+    const admin = await User.findById(req.userId).select("verified name email");
     if (!admin.verified) {
       forwardError(
         "You have to be verified for schedule appointments to someone - please verify your email first!",
@@ -150,7 +161,7 @@ exports.scheduleAppointment = async (req, res, next) => {
         400
       );
 
-    const user = await User.findById(guest);
+    const user = await User.findById(guest).select("verified name email");
     if (!user)
       forwardError("Guest's account not found for schedule appointment.", 404);
 
@@ -192,6 +203,16 @@ exports.scheduleAppointment = async (req, res, next) => {
       await (await appointment.save()).populate("admin", "-password -util")
     ).populate("guest", "-password -util");
 
+    sendEmail("meet-schedule", {
+      email: user.email,
+      name: user.name,
+      admin_name: admin.name,
+      admin_email: admin.email,
+      date: convertDate(startTime),
+      time: convertTime(startTime),
+      duration,
+    }).catch(() => {});
+
     res.status(201).json({
       success: true,
       message: "Appointment scheduled Successfully!",
@@ -208,4 +229,81 @@ exports.scheduleAppointment = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+exports.cancelAppointment = async (req, res, next) => {
+  const { meetId } = req.params;
+
+  let admin, guest, startTime, endTime;
+  try {
+    const meet = await Appointment.findById(meetId)
+      .populate("admin", "name email")
+      .populate("guest", "name email");
+    if (!meet) {
+      forwardError(
+        "Appointment not Found - Seems like there is no appointment with that kind!",
+        404
+      );
+    }
+
+    if (
+      meet.guest._id.toString() !== req.userId &&
+      meet.admin._id.toString() !== req.userId
+    ) {
+      forwardError("You are not authorized to cancel this appointment!", 403);
+    }
+
+    if (meet.start <= Date.now() && Date.now() <= meet.end) {
+      forwardError(
+        "The appointment is currently going on - So canceling it, is not possible!",
+        400
+      );
+    }
+
+    if (meet.end < Date.now()) {
+      forwardError("The appointment was already done - So, canceling it have no meaning!", 400);
+    }
+
+    if (meet.cancel) {
+      forwardError("The appointment is already canceled!", 400);
+    }
+
+    admin = meet.admin._doc;
+    guest = meet.guest._doc;
+    startTime = meet.start;
+    endTime = meet.end;
+
+    meet.cancel = true;
+    await meet.save();
+
+    res
+      .status(200)
+      .json({ success: true, message: "Appointment canceled Successfully!" });
+  } catch (error) {
+    return next(error);
+  }
+
+  //Send mail to other person (not the one who cancel the appointment)
+  //who is also associated with the appointment for notifying him that appointment is canceled.
+  try {
+    const cancelBy = req.userId === guest._id.toString() ? "guest" : "admin";
+    const receipentEmail = cancelBy === "guest" ? admin.email : guest.email;
+    const receipentName = cancelBy === "guest" ? admin.name : guest.name;
+    const userEmail = cancelBy !== "guest" ? admin.email : guest.email;
+    const userName = cancelBy !== "guest" ? admin.name : guest.name;
+
+    const date = convertDate(new Date(startTime));
+    const time = convertTime(new Date(startTime));
+
+    sendEmail("meet-cancel", {
+      cancelBy,
+      email: receipentEmail,
+      name: receipentName,
+      user_email: userEmail,
+      user_name: userName,
+      date,
+      time,
+      duration: (endTime - startTime) / (1000 * 60 * 60),
+    }).catch(() => {});
+  } catch (error) {}
 };

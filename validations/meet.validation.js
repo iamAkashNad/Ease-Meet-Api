@@ -8,10 +8,11 @@ const helper = (value, field) => {
       ("a" > char || char > "z") &&
       char !== " " &&
       char !== "!" &&
-      char !== "?"
+      char !== "?" &&
+      char !== "."
     )
       throw new Error(
-        `${field} only contains alphabets, whites spaces, '!' & '?'.`
+        `${field} only contains alphabets, whites spaces, '.', '!' & '?'.`
       );
   }
   return true;
@@ -33,10 +34,7 @@ const isValidAgenda = () => {
     .trim()
     .notEmpty()
     .isLength({ min: 10, max: 250 })
-    .withMessage("Agenda must contains 10-250 characters.")
-    .custom((agenda) => {
-      return helper(agenda, "agenda");
-    });
+    .withMessage("Agenda must contains 10-250 characters.");
 };
 
 exports.meetValidation = () => [isValidTitle(), isValidAgenda()];

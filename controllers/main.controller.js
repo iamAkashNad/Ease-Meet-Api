@@ -88,9 +88,9 @@ exports.scheduleAppointment = async (req, res, next) => {
     );
   }
 
-  if (startTime <= Date.now()) {
+  if (startTime <= Date.now() + (1000 * 60 * 20)) {
     return forwardError(
-      "You can't schedule an appointment in past or right now - please choose a date in future!",
+      "You can't schedule an appointment in past or under 20 minutes from now - please choose a date in future!",
       400,
       next
     );

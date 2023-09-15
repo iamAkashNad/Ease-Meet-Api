@@ -48,7 +48,7 @@ router.post("/signup", signupValidation(), signup);
 The ```POST``` request will have a ```body``` which will be in ```json``` format and it looks like this.
 ```json
 {
-    "name": "John Doe",
+	"name": "John Doe",
 	"email": "johndoe@gmail.com",
 	"password": "somepassword"
 }
@@ -123,8 +123,8 @@ router.post("/signup/verify", verifyEmail);
 The request contains a body which will be again in ```json``` format & looks like this,
 ```json
 {
-	"code":  "<code>", // The code we get in mail.
-	"email":  "johndoe@gmail.com" //same email which was used in the previous request.
+	"code":  "<code>",
+	"email":  "johndoe@gmail.com"
 }
 ```
 Here, the code we will send to the backend will be checked and also it's expiration. And if everything goes correct, the ```verified``` field in user will be assigned as ```true```, which was initialized as ```false``` when we create an account (And that's why I said previously that in signup, an unverified user was created).
@@ -203,9 +203,9 @@ router.patch("/password/forgot", validPassword(), updatePassword);
 The ```request body``` will be looks like this,
 ```json
 {
-	 "email":  "johndoe@gmail.com", // Same email which we use in the previous request.
-	 "code":  "<code>",
-	 "password":  "somenewpassword"
+	"email":  "johndoe@gmail.com",
+	"code":  "<code>",
+	"password":  "somenewpassword"
 }
 ```
 First of all the ```password```, we send via ```request``` will be validate by ```validPassword()``` function and then if the ```password``` is valid and the ```code``` is matched and not expires then the ```password``` will be updated with the new one. And again for hash the new password, [Bcrypt.js Library](https://www.npmjs.com/package/bcrypt) is used.
@@ -318,8 +318,8 @@ The ```request body``` will be looks like this,
 	"title":  "Test Meet",
 	"agenda":  "Test Meet on Ease Meet!",
 	"start":  "Some Start Date",
-	"duration":  "2", // As per the API there are 3 options 1 or 2 or 3 hours.
-	"guest":  "<guest-user-id>" // To whom we want to schedule the appointment.
+	"duration":  "2",
+	"guest":  "<guest-user-id>"
 }
 ```
 In this route as it shows, we might guess first of all our authentication will be checked, then the ```appointment``` data in the ```body``` will be validate and if all goes in a right way, then the route will check that is there any ```off hours``` or ```appointments``` at that particular time where we want to schedule the current ```appointment``` for both the users and if it is not the case then it will simply schedule that ```appointment``` for us with that guest user and that guest user will receives an automated mail to his/her verified email.

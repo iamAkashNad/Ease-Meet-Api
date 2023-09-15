@@ -203,9 +203,9 @@ router.patch("/password/forgot", validPassword(), updatePassword);
 The ```request body``` will be looks like this,
 ```
 {
-"email":  "johndeo@gmail.com", // Same email which we use in the previous request.
-"code":  "<code>",
-"password":  "somenewpassword"
+	"email":  "johndeo@gmail.com", // Same email which we use in the previous request.
+	"code":  "<code>",
+	"password":  "somenewpassword"
 }
 ```
 First of all the ```password```, we send via ```request``` will be validate by ```validPassword()``` function and then if the ```password``` is valid and the ```code``` is matched and not expires then the ```password``` will be updated with the new one. And again for hash the new password, [Bcrypt.js Library](https://www.npmjs.com/package/bcrypt) is used.

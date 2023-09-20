@@ -67,6 +67,20 @@ exports.getUpcomingAppoinments = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+
+  //Clean Up
+  Appointment.deleteMany({
+    $or: [
+      {
+        admin: req.userId,
+        end: { $lt: Date.now() },
+      },
+      {
+        guest: req.userId,
+        end: { $lt: Date.now() },
+      },
+    ],
+  }).catch(() => {});
 };
 
 exports.scheduleAppointment = async (req, res, next) => {

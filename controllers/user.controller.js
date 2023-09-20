@@ -138,6 +138,12 @@ exports.getOffHours = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+
+  //Clean Up
+  OffHour.deleteMany({
+    user: req.userId,
+    end: { $lte: Date.now() }
+  }).catch(() => {});
 };
 
 exports.addOffHours = async (req, res, next) => {
